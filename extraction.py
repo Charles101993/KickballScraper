@@ -3,7 +3,11 @@ import requests
 from bs4 import BeautifulSoup
 
 stats = []
-for idx in range(38200, 55200):
+valid_league_ids = [41652, 41653, 41751, 42206, 42207, 42230, 42231, 42232, 42288, 42731,
+                    42732, 42734, 42735, 43448, 43456, 43693, 43695, 43968, 44388, 44389,
+                    44390, 44391, 44524, 44525, 44526, 44778]
+
+for idx in valid_league_ids:
     try:
         url = f'https://austinssc.leaguelab.com/league/{idx}/standings'
         response = requests.get(url, allow_redirects=False)
@@ -20,9 +24,10 @@ for idx in range(38200, 55200):
         points_allowed = soup.find_all('td', class_="lastColumn")
         total_points_allowed = 0
         num_teams = 0
-        games_per_team = 0
-        for wld in wlds[:3]:
-            games_per_team += int(str.strip(wld.text))
+        total_games = 0
+        for wld in wlds:
+            total_games += int(str.split(str.strip(wld.text), ' ')[0])
+        total_games = total_games/2
         for pa in points_allowed:
             total_points_allowed += int(str.strip(pa.text))
             num_teams += 1
@@ -31,13 +36,13 @@ for idx in range(38200, 55200):
             'field_name': field_name,
             'day_of_week': day_of_week,
             'sport': sport,
-            'games_per_team': games_per_team,
+            'total_games': total_games,
             'num_teams': num_teams,
             'total_points_allowed': total_points_allowed,
             'url': url
         })
 
-        pd.DataFrame(stats).to_csv('scraped_kickball_scores_url.csv', index=False)
+        pd.DataFrame(stats).to_csv('scraped_kickball_scores_tot_games.csv', index=False)
 
     except Exception as e:
         print(e)
